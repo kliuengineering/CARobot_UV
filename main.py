@@ -1,7 +1,60 @@
-from machine import I2C, Pin
+from machine import I2C, Pin, ADC
 from ssd1306 import SSD1306_I2C
 import time
 from time import sleep
+
+
+# Initialize I2C for the OLED display
+i2c = I2C(0, scl=Pin(17), sda=Pin(16))
+oled = SSD1306_I2C(128, 64, i2c)
+
+# Initialize ADC for ML8511
+adc = ADC(Pin(28))
+
+# Enable the ML8511 sensor
+enable = Pin(15, Pin.OUT)
+enable.value(1)  # Set the EN pin to high to enable the sensor
+
+
+# Function to convert voltage to UV index
+def voltage_to_uv_index(voltage):
+    # UV index calculation based on ML8511 sensor characteristics
+    # These values are from the ML8511 datasheet
+    if voltage < 0.99:
+        return 0.0
+    elif voltage > 2.8:
+        return 15.0
+    else:
+        uv_index = (voltage - 0.99) * (15.0 / (2.8 - 0.99))
+        return uv_index
+
+
+# Function to read UV intensity from ML8511
+def read_uv_index():
+    raw_value = adc.read_u16()
+    voltage = raw_value * (3.3 / 65535)  # Convert raw ADC value to voltage
+    uv_index = voltage_to_uv_index(voltage)
+    return uv_index
+
+
+# Function to display UV index on OLED
+def display_uv_index(uv_index):
+    oled.fill(0)
+    oled.text("UV Index:", 0, 0)
+    oled.text("{:.2f}".format(uv_index), 0, 10)
+    oled.show()
+
+
+# Main routine to read UV index and update OLED
+while True:
+    uv_index = read_uv_index()
+    display_uv_index(uv_index)
+    sleep(1)
+
+
+'''
+################################ HARDWARE TESTING CODES ################################
+
 
 
 # Tests the I2C connection @ pin 17 and 16
@@ -29,9 +82,9 @@ def TestSSD1306():
     oled.fill(0)
 
     # Display some text
-    oled.text("Hello, World!", 0, 0)
+    oled.text("Test Script...", 0, 0)
     oled.text("Canada Robotix", 0, 10)
-    oled.text("SSD1306 OLED", 0, 20)
+    oled.text("SSD1306", 0, 20)
 
     # Update the display to show the text
     oled.show()
@@ -45,5 +98,8 @@ def TestSSD1306():
 # TestI2C()
 
 # Uncomment the following line to test the SSD1306 display
-TestSSD1306()
+# TestSSD1306()
+
+################################ HARDWARE TESTING CODES ################################
+'''
 

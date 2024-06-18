@@ -1,8 +1,6 @@
 from machine import I2C, Pin, ADC
 from ssd1306 import SSD1306_I2C
-import time
 from time import sleep
-
 
 # Initialize I2C for the OLED display
 i2c = I2C(0, scl=Pin(17), sda=Pin(16))
@@ -15,27 +13,24 @@ adc = ADC(Pin(28))
 enable = Pin(15, Pin.OUT)
 enable.value(1)  # Set the EN pin to high to enable the sensor
 
-
 # Function to convert voltage to UV index
 def voltage_to_uv_index(voltage):
     # UV index calculation based on ML8511 sensor characteristics
-    # These values are from the ML8511 datasheet
-    if voltage < 0.99:
+    # These values are from the ML8511 datasheet (0.95V to 2.32V)
+    if voltage < 0.95:
         return 0.0
-    elif voltage > 2.8:
-        return 15.0
+    elif voltage > 2.32:
+        return 11.0  # Capping the UV index at 11 for this example
     else:
-        uv_index = (voltage - 0.99) * (15.0 / (2.8 - 0.99))
+        uv_index = (voltage - 0.95) * (11.0 / (2.32 - 0.95))
         return uv_index
-
 
 # Function to read UV intensity from ML8511
 def read_uv_index():
-    raw_value = adc.read_u16()
-    voltage = raw_value * (3.3 / 65535)  # Convert raw ADC value to voltage
-    uv_index = voltage_to_uv_index(voltage)
+    raw_value = adc.read_u16()  # Read raw ADC value (0 to 65535)
+    voltage = raw_value * (3.3 / 65535)  # Convert raw ADC value to voltage (0V to 3.3V)
+    uv_index = voltage_to_uv_index(voltage)  # Convert voltage to UV index
     return uv_index
-
 
 # Function to display UV index on OLED
 def display_uv_index(uv_index):
@@ -44,8 +39,7 @@ def display_uv_index(uv_index):
     oled.text("{:.2f}".format(uv_index), 0, 10)
     oled.show()
 
-
-# Main routine to read UV index and update OLED
+# Main loop to continuously read UV index and update OLED
 while True:
     uv_index = read_uv_index()
     display_uv_index(uv_index)

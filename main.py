@@ -35,8 +35,16 @@ def read_uv_index():
 # Function to display UV index on OLED
 def display_uv_index(uv_index):
     oled.fill(0)
-    oled.text("UV Index:", 0, 0)
-    oled.text("{:.2f}".format(uv_index), 0, 10)
+    oled.text("Canada Robotix", 0, 0)
+    oled.text("UV-B Index:", 0, 20)
+    oled.text("{:.2f}".format(uv_index), 0, 30)
+
+    # Draw horizontal bar graph
+    oled.text("Bar Graph:")
+    bar_length = int((uv_index / 11.0) * 128)  # Scale UV index to 0-128 for bar length
+    for i in range(bar_length):
+        oled.pixel(i, 630, 1)  # Draw the bar starting at y=63
+
     oled.show()
 
 # Main loop to continuously read UV index and update OLED
